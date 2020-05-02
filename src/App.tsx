@@ -3,35 +3,57 @@ import React from 'react';
 import './App.css';
 import Speak from './components/Speak';
 
-export class App extends React.Component {
 
-  constructor(props:any) {
+
+interface AppState {
+  text: string
+}
+
+export class App extends React.Component<any, AppState> {
+
+  constructor(props: any) {
     super(props);
     this.input = React.createRef();
+    this.state = {
+      text: ''
+    }
   }
 
-  handleSubmit = (event:any) => {
-    alert('A name was submitted: ' + this.input.current.value);
+  input: React.RefObject<HTMLInputElement>;
+
+
+  componentDidMount() {
+    this.input.current!.focus();
+  }
+
+
+  handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    let input = this.input.current!;
+    let val = input.value;
+    console.log(val);
+    this.setState(() => ({
+      text: val
+    }))
+    input.value = '';
     event.preventDefault();
   }
 
-  input:any;
 
   render() {
 
     return (
       <div className="App">
-          <h1>Audio trivia </h1>
-  
-          <form onSubmit={this.handleSubmit}>
+        <h1>Audio trivia </h1>
+
+        <form onSubmit={this.handleSubmit}>
           <label>
-            Name:
+            Say something: <br/>
             <input type="text" ref={this.input} />
           </label>
           <input type="submit" value="Submit" />
         </form>
-  
-          <Speak text="Hello world" />
+
+        <Speak text={this.state.text} />
       </div>
     );
   }
