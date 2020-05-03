@@ -2,7 +2,11 @@
 
 A web-based trivia game you can play and control just using your voice and ears. Uses publicly available trivia datasets, IBM Cloud text-to-speech engine to read questions and IBM speech-to-text engine to evaluate answers.
 
-# Frontend
+# Requirements
+
+* Node, npm (or yarn)
+
+## Frontend
 
 A react single page app. To run:
 
@@ -10,7 +14,7 @@ A react single page app. To run:
  * `npm install`
  * `npm start`
 
-# Backend
+## Backend
 
 A simple express server. To run:
 
