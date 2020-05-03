@@ -13,7 +13,7 @@ export class App extends React.Component<any, AppState> {
     super(props);
     this.input = React.createRef();
     this.state = {
-      text: ''
+      text: 'Say something'
     }
   }
 
