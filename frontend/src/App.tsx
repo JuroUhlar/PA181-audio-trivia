@@ -42,7 +42,7 @@ export class App extends React.Component<any, AppState> {
         <form onSubmit={this.handleSubmit}>
           <label>
             Say something: <br/>
-            <input type="text" ref={this.input} />
+            <input type="text" ref={this.input} id='textInput'/>
           </label>
           <input type="submit" value="Submit" />
         </form>
