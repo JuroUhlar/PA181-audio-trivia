@@ -3,8 +3,6 @@ import React from 'react';
 import './App.css';
 import Speak from './components/Speak';
 
-
-
 interface AppState {
   text: string
 }
@@ -21,7 +19,6 @@ export class App extends React.Component<any, AppState> {
 
   input: React.RefObject<HTMLInputElement>;
 
-
   componentDidMount() {
     this.input.current!.focus();
   }
@@ -30,7 +27,6 @@ export class App extends React.Component<any, AppState> {
   handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     let input = this.input.current!;
     let val = input.value;
-    console.log(val);
     this.setState(() => ({
       text: val
     }))
@@ -38,9 +34,7 @@ export class App extends React.Component<any, AppState> {
     event.preventDefault();
   }
 
-
   render() {
-
     return (
       <div className="App">
         <h1>Audio trivia </h1>
