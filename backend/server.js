@@ -4,6 +4,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const express = require('express')
 const TextToSpeechV1 = require('ibm-watson/text-to-speech/v1.js');
+const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1.js');
 const { IamAuthenticator } = require('ibm-watson/auth');
 
 const app = express()
@@ -33,6 +34,7 @@ app.get('/api/v1/synthesize', async (req, res, next) => {
 });
 
 
+
 const textToSpeech = new TextToSpeechV1({
   version: '2018-04-05',
   authenticator: new IamAuthenticator({
@@ -41,6 +43,30 @@ const textToSpeech = new TextToSpeechV1({
   url: process.env.TEXT_TO_SPEECH_URL,
 });
 
+
+const speechToText = new SpeechToTextV1({
+  authenticator: new IamAuthenticator({
+    apikey: process.env.SPEECH_TO_TEXT_IAM_APIKEY || 'type-key-here',
+  }),
+  url: process.env.SPEECH_TO_TEXT_URL,
+});
+
+var fs = require('fs');
+const recognizeParams = {
+  audio: fs.createReadStream('hello_world.wav'),
+  contentType: 'audio/wav',
+  wordAlternativesThreshold: 0.9,
+  keywords: ['hello', 'world'],
+  keywordsThreshold: 0.5,
+};
+
+speechToText.recognize(recognizeParams)
+    .then(speechRecognitionResults => {
+      console.log(JSON.stringify(speechRecognitionResults, null, 2));
+    })
+    .catch(err => {
+      console.log('error:', err);
+    });
 
 const getFileExtension = (acceptQuery) => {
   const accept = acceptQuery || '';
