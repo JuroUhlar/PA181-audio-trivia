@@ -6,6 +6,7 @@ import AudioRecorder from 'react-audio-recorder';
 
 interface AppState {
   text: string
+  list: any
 }
 
 export class App extends React.Component<any, AppState> {
@@ -14,7 +15,8 @@ export class App extends React.Component<any, AppState> {
     super(props);
     this.input = React.createRef();
     this.state = {
-      text: 'Say something'
+      text: 'Say something',
+      list: []
     }
   }
 
@@ -35,8 +37,29 @@ export class App extends React.Component<any, AppState> {
     event.preventDefault();
   }
 
-  handleClick = () => {
+  handleRecording = (event: any) => {
     console.log('Clicks happened');
+    console.log(event);
+    if (event.audioData != null) {
+      const url = window.URL.createObjectURL(event.audioData);
+      console.log(url);
+
+      var fd = new FormData().append('audio', event.audioData);
+
+      fetch('http://localhost:5000/api/v1/recognize', {
+        headers: {'Accept': 'application/json',
+          'Content-Type': 'application/json' },
+        method: "POST", body: JSON.stringify({a: 1, b: 'Textual content'})
+      });
+    }
+
+    // fetch('http://localhost:5000/api/v1/recognize')
+    //     .then(res => res.json())
+
+    // fetch('http://localhost:5000/api/v1/recognize')
+    //       .then(res => res.json())
+    //       .then(list => this.setState({ list }))
+
   }
 
   render() {
@@ -54,7 +77,12 @@ export class App extends React.Component<any, AppState> {
 
         <Speak text={this.state.text} />
 
-        <AudioRecorder onChange={this.handleClick}/>
+        <div id='voiceRecord'>
+          <label>
+            Record something: <br/>
+            <AudioRecorder onChange={this.handleRecording} />
+          </label>
+        </div>
       </div>
     );
   }

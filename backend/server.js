@@ -7,10 +7,16 @@ const TextToSpeechV1 = require('ibm-watson/text-to-speech/v1.js');
 const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1.js');
 const { IamAuthenticator } = require('ibm-watson/auth');
 
+var cors = require('cors');
+var multer = require('multer');
+var upload = multer();
+var bodyParser = require('body-parser');
+
 const app = express()
 const port = process.env.PORT || 5000;
 
 app.enable('trust proxy')
+app.use(cors())
 
 app.get('/', (req, res) => res.send('Hello World!'))
 
@@ -33,6 +39,26 @@ app.get('/api/v1/synthesize', async (req, res, next) => {
   }
 });
 
+// for parsing application/json
+app.use(bodyParser.json());
+
+// for parsing multipart/form-data
+app.use(upload.array());
+app.use(express.static('public'));
+
+app.post('/api/v1/recognize',(req, res, next) => {
+  console.log("in recognize");
+  try {
+    console.log("in try");
+    console.log(req.body);
+    var list = ["item1", "item2", "item3"];
+    res.json(list);
+  } catch (error) {
+    console.log("in err");
+    res.send(error);
+  }
+});
+
 
 
 const textToSpeech = new TextToSpeechV1({
@@ -51,22 +77,22 @@ const speechToText = new SpeechToTextV1({
   url: process.env.SPEECH_TO_TEXT_URL,
 });
 
-var fs = require('fs');
-const recognizeParams = {
-  audio: fs.createReadStream('hello_world.wav'),
-  contentType: 'audio/wav',
-  wordAlternativesThreshold: 0.9,
-  keywords: ['hello', 'world'],
-  keywordsThreshold: 0.5,
-};
-
-speechToText.recognize(recognizeParams)
-    .then(speechRecognitionResults => {
-      console.log(JSON.stringify(speechRecognitionResults, null, 2));
-    })
-    .catch(err => {
-      console.log('error:', err);
-    });
+// var fs = require('fs');
+// const recognizeParams = {
+//   audio: fs.createReadStream('hello_world.wav'),
+//   contentType: 'audio/wav',
+//   wordAlternativesThreshold: 0.9,
+//   keywords: ['hello', 'world'],
+//   keywordsThreshold: 0.5,
+// };
+//
+// speechToText.recognize(recognizeParams)
+//     .then(speechRecognitionResults => {
+//       console.log(JSON.stringify(speechRecognitionResults, null, 2));
+//     })
+//     .catch(err => {
+//       console.log('error:', err);
+//     });
 
 const getFileExtension = (acceptQuery) => {
   const accept = acceptQuery || '';
