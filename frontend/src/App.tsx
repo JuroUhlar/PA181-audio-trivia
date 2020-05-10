@@ -2,6 +2,7 @@ import React from 'react';
 
 import './App.css';
 import Speak from './components/Speak';
+import AudioRecorder from 'react-audio-recorder';
 
 interface AppState {
   text: string
@@ -34,6 +35,10 @@ export class App extends React.Component<any, AppState> {
     event.preventDefault();
   }
 
+  handleClick = () => {
+    console.log('Clicks happened');
+  }
+
   render() {
     return (
       <div className="App">
@@ -48,6 +53,8 @@ export class App extends React.Component<any, AppState> {
         </form>
 
         <Speak text={this.state.text} />
+
+        <AudioRecorder onChange={this.handleClick}/>
       </div>
     );
   }

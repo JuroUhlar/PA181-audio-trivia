@@ -12,8 +12,10 @@
     "@types/react-dom": "^16.9.0",
     "ibm-watson": "^5.5.0",
     "react": "^16.13.1",
+    "react-audio-recorder": "github:MatrixFrog/react-audio-recorder#master",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
+    "react-voice-recorder": "^1.0.8",
     "typescript": "~3.7.2"
   },
   "scripts": {
