@@ -54,7 +54,7 @@ app.post('/api/v1/recognize', (req, res) => {
   try {
     const recognizeParams = {
       audio: req.files.audio, // ReadableStream
-      contentType: 'audio/wav',
+      contentType: 'audio/mpeg',
       model: 'en-US_BroadbandModel',
       // See more params at: https://cloud.ibm.com/apidocs/speech-to-text?code=node#recognize-audio
     };
