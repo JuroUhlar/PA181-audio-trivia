@@ -46,9 +46,10 @@ export class App extends React.Component<any, AppState> {
         method: "POST", body: fd
       }).then(response => response.json())
         .then(response => {
-          this.setState(() => ({
-            recordedText: response.result.results[0].alternatives[0].transcript
-          }));
+          if(response.result.results.length !== 0){
+            this.setState(() => ({
+              recordedText: response.result.results[response.result.results.length-1].alternatives[0].transcript
+          }))}
         });
     }
   };

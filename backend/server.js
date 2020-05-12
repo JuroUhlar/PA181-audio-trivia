@@ -9,18 +9,12 @@ const { IamAuthenticator } = require('ibm-watson/auth');
 
 const cors = require('cors');
 const formData = require("express-form-data");
-const os = require("os");
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-const options = {
-  uploadDir: "uploads/",
-  autoClean: true
-};
-
 // parse data with connect-multiparty.
-app.use(formData.parse(options));
+app.use(formData.parse());
 // delete from the request all empty files (size == 0)
 app.use(formData.format());
 // change the file objects to fs.ReadStream
@@ -29,6 +23,7 @@ app.use(formData.stream());
 app.use(formData.union());
 
 app.enable('trust proxy');
+
 app.use(cors());
 
 app.get('/', (req, res) => res.send('Hello World!'))
@@ -52,13 +47,16 @@ app.get('/api/v1/synthesize', async (req, res, next) => {
   }
 });
 
+/**
+ * Recognize audio
+ */
 app.post('/api/v1/recognize', (req, res) => {
   try {
-    // See more params at: https://cloud.ibm.com/apidocs/speech-to-text?code=node#recognize-audio
     const recognizeParams = {
       audio: req.files.audio, // ReadableStream
       contentType: 'audio/wav',
       model: 'en-US_BroadbandModel',
+      // See more params at: https://cloud.ibm.com/apidocs/speech-to-text?code=node#recognize-audio
     };
     speechToText.recognize(recognizeParams)
         .then(speechRecognitionResults => {
@@ -68,12 +66,9 @@ app.post('/api/v1/recognize', (req, res) => {
           res.send(err);
         });
   } catch (error) {
-    console.log("in err");
-    console.log(error);
     res.send(error);
   }
 });
-
 
 const textToSpeech = new TextToSpeechV1({
   version: '2018-04-05',
