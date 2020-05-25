@@ -4,12 +4,27 @@ if (process.env.NODE_ENV !== 'production') {
 
 const express = require('express')
 const TextToSpeechV1 = require('ibm-watson/text-to-speech/v1.js');
+const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1.js');
 const { IamAuthenticator } = require('ibm-watson/auth');
 
-const app = express()
+const cors = require('cors');
+const formData = require("express-form-data");
+
+const app = express();
 const port = process.env.PORT || 5000;
 
-app.enable('trust proxy')
+// parse data with connect-multiparty.
+app.use(formData.parse());
+// delete from the request all empty files (size == 0)
+app.use(formData.format());
+// change the file objects to fs.ReadStream
+app.use(formData.stream());
+// union the body and the files
+app.use(formData.union());
+
+app.enable('trust proxy');
+
+app.use(cors());
 
 app.get('/', (req, res) => res.send('Hello World!'))
 
@@ -32,6 +47,28 @@ app.get('/api/v1/synthesize', async (req, res, next) => {
   }
 });
 
+/**
+ * Recognize audio
+ */
+app.post('/api/v1/recognize', (req, res) => {
+  try {
+    const recognizeParams = {
+      audio: req.files.audio, // ReadableStream
+      contentType: 'audio/mpeg',
+      model: 'en-US_BroadbandModel',
+      // See more params at: https://cloud.ibm.com/apidocs/speech-to-text?code=node#recognize-audio
+    };
+    speechToText.recognize(recognizeParams)
+        .then(speechRecognitionResults => {
+          res.send(JSON.stringify(speechRecognitionResults, null, 2))
+        })
+        .catch(err => {
+          res.send(err);
+        });
+  } catch (error) {
+    res.send(error);
+  }
+});
 
 const textToSpeech = new TextToSpeechV1({
   version: '2018-04-05',
@@ -40,6 +77,15 @@ const textToSpeech = new TextToSpeechV1({
   }),
   url: process.env.TEXT_TO_SPEECH_URL,
 });
+
+
+const speechToText = new SpeechToTextV1({
+  authenticator: new IamAuthenticator({
+    apikey: process.env.SPEECH_TO_TEXT_IAM_APIKEY || 'type-key-here',
+  }),
+  url: process.env.SPEECH_TO_TEXT_URL,
+});
+
 
 
 const getFileExtension = (acceptQuery) => {
