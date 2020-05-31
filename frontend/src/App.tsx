@@ -10,6 +10,8 @@ interface AppState {
   recordedText: string
 }
 
+const levenshtein = require('js-levenshtein');
+
 export class App extends React.Component<any, AppState> {
 
   constructor(props: any) {
@@ -17,7 +19,11 @@ export class App extends React.Component<any, AppState> {
     this.input = React.createRef();
     this.state = {
       text: 'Say something',
-      recordedText: ''
+      recordedText: '',
+	  question: '',
+	  incorrectAnswers: [],
+	  correctAnswer: '',
+	  mixedAnswers: [],
     }
   }
 
@@ -54,12 +60,29 @@ export class App extends React.Component<any, AppState> {
                 recordedText: response.result.results[response.result.results.length-1].alternatives[0].transcript
               }))}
           });
+		this.state.mixedAnswers.map((ans) => {
+			console.log(levenshtein(this.state.recordedText, ans));
+		});
     }
   };
 
   _onRecordingError = (err: any) => {
     console.log('recording error', err)
   };
+  //  Getne otazku - replace je kvůli tomu, že mi přijde &quot místo " a podobně,
+  //  nevěděl jsem jak to rychle po par pokusech jednoduše rozkodovat, tak je to takto skarede
+  //  takze to chce predelat
+  getQuestion = () => {
+	fetch('https://opentdb.com/api.php?amount=1&type=multiple')
+		.then(response => response.json())
+		.then(data => this.setState({ 
+			question: data.results[0].question.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
+			correctAnswer: data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
+			incorrectAnswers: data.results[0].incorrect_answers.map(x => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')),
+			mixedAnswers: [...data.results[0].incorrect_answers.map(x => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\''))]
+						  .concat(data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')).sort(() => 0.5 - Math.random())
+		}));
+	}
 
   render() {
     return (
@@ -75,9 +98,18 @@ export class App extends React.Component<any, AppState> {
         </form>
 
         <Speak text={this.state.text} />
-
-
-        <div id='voiceRecord'>
+		
+        <div id='triviaAPI'>
+          <label>
+			<br />
+			<h1> Get question from triviaAPI</h1> 
+			<button onClick={this.getQuestion}>Get question</button>
+			<br/> Question is: <br/>
+			<Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") } />
+          </label>
+		  
+        </div>
+		<div id='voiceRecord'>
           <Recorder
               onRecordingComplete={this._onRecordingComplete}
               onRecordingError={this._onRecordingError}
