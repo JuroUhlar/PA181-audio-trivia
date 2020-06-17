@@ -3,9 +3,7 @@ import React from 'react';
 import './App.css';
 import Speak from './components/Speak';
 // @ts-ignore
-import Recorder from 'react-mp3-recorder'
-import { runInThisContext } from 'vm';
-const levenshtein = require('js-levenshtein');
+import Recorder from 'react-mp3-recorder';
 
 interface AppState {
   text: string,
@@ -69,7 +67,7 @@ export class App extends React.Component<any, AppState> {
           });
     }
   };
-  getOutcome(recordedText)
+  getOutcome(recordedText:any)
   {
     switch (recordedText.trim()) {
       case "a":
@@ -78,7 +76,7 @@ export class App extends React.Component<any, AppState> {
       case "our":
       case "A.":
       case "eight":
-        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 0)
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 0)
           return ("Correct!");
         else 
           return ("Incorrect!");
@@ -87,7 +85,7 @@ export class App extends React.Component<any, AppState> {
       case "be":
       case "e":
       case "B.":
-        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 1)
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 1)
           return ("Correct!");
         else 
           return ("Incorrect!");
@@ -96,7 +94,7 @@ export class App extends React.Component<any, AppState> {
       case "sea":
       case "ce":
       case "C.":
-        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 2)
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 2)
           return ("Correct!");
         else 
           return ("Incorrect!");
@@ -105,7 +103,7 @@ export class App extends React.Component<any, AppState> {
       case "dear":
       case "de":
       case "D.":
-        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 3)
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 3)
           return ("Correct!");
         else 
           return ("Incorrect!");
@@ -137,13 +135,13 @@ export class App extends React.Component<any, AppState> {
       recordedText:"",
       question: data.results[0].question.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
 			correctAnswer: data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
-			incorrectAnswers: data.results[0].incorrect_answers.map(x => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')),
-			mixedAnswers: [...data.results[0].incorrect_answers.map(x => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\''))]
+			incorrectAnswers: data.results[0].incorrect_answers.map((x:any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')),
+			mixedAnswers: [...data.results[0].incorrect_answers.map((x:any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\''))]
 						  .concat(data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')).sort(() => 0.5 - Math.random())
 		}));
   };
   
-   getIndex(value, arr) {
+   getIndex(value:any, arr:any) {
     for(var i = 0; i < arr.length; i++) {
         if(arr[i] === value) {
             return i;
