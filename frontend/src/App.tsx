@@ -135,7 +135,7 @@ export class App extends React.Component<any, AppState> {
   _onRecordingError = (err: any) => {
     console.log('recording error', err)
   };
-  
+
 
   getIndex(value: any, arr: any) {
     for (var i = 0; i < arr.length; i++) {
@@ -153,13 +153,10 @@ export class App extends React.Component<any, AppState> {
     return (
       <div className="App">
         <div id='triviaAPI'>
-          <label>
-            <br />
-            <h1> Get question from triviaAPI!</h1>
-            <button onClick={this.getQuestion}>Get question</button>
-            <br /> Question is: <br />
-            {this.state.question !== '' && <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} />}
-          </label>
+          <h1> Get question from triviaAPI!</h1>
+          <button onClick={this.getQuestion}>Get question</button>
+          <br /> Question is: <br />
+          {this.state.question !== '' && <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} />}
 
         </div>
         <div id='voiceRecord'>
