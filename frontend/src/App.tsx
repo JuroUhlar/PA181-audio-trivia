@@ -64,66 +64,65 @@ export class App extends React.Component<any, AppState> {
             if(response.result.results.length !== 0){
               this.setState(() => ({
                 recordedText: response.result.results[response.result.results.length-1].alternatives[0].transcript,
-                outcome: this.getOutcome(response.result.results[response.result.results.length-1].alternatives[0].transcript)//response.result.results[response.result.results.length-1].alternatives[0].transcript"")
+                outcome: this.getOutcome(response.result.results[response.result.results.length-1].alternatives[0].transcript)
               }))}
           });
     }
   };
   getOutcome(recordedText)
   {
-  switch (recordedText.trim()) {
-    case "a":
-    case "hey":
-    case "hey you":
-    case "our":
-    case "A.":
-    case "eight":
-      if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 0)
-        return ("Correct!");
-      else 
-        return ("Incorrect!");
-    case "b":
-    case "bee":
-    case "be":
-    case "e":
-    case "B.":
-      if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 1)
-        return ("Correct!");
-      else 
-        return ("Incorrect!");
-    case "c":
-    case "see":
-    case "sea":
-    case "ce":
-    case "C.":
-      if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 2)
-        return ("Correct!");
-      else 
-        return ("Incorrect!");
-    case "d":
-    case "deer":
-    case "dear":
-    case "de":
-    case "D.":
-      if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 3)
-        return ("Correct!");
-      else 
-        return ("Incorrect!");
-    case "Question.":
-    case "Questions.":
-    case "question":
-    case "questions":
-    case "Christian.":
-    case "christian":
-    {
-      this.getQuestion();
-      return ("");
-    }  
-    default: 
-        return('Unable to process! Please, try to record your answer again!');
+    switch (recordedText.trim()) {
+      case "a":
+      case "hey":
+      case "hey you":
+      case "our":
+      case "A.":
+      case "eight":
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 0)
+          return ("Correct!");
+        else 
+          return ("Incorrect!");
+      case "b":
+      case "bee":
+      case "be":
+      case "e":
+      case "B.":
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 1)
+          return ("Correct!");
+        else 
+          return ("Incorrect!");
+      case "c":
+      case "see":
+      case "sea":
+      case "ce":
+      case "C.":
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 2)
+          return ("Correct!");
+        else 
+          return ("Incorrect!");
+      case "d":
+      case "deer":
+      case "dear":
+      case "de":
+      case "D.":
+        if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) == 3)
+          return ("Correct!");
+        else 
+          return ("Incorrect!");
+      case "Question.":
+      case "Questions.":
+      case "question":
+      case "questions":
+      case "Christian.":
+      case "christian":
+      {
+        this.getQuestion();
+        return ("");
+      }  
+      default: 
+          return('Unable to process! Please, try to record your answer again!');
+    }
   }
-  return('Nerozpoznano');
-}
   _onRecordingError = (err: any) => {
     console.log('recording error', err)
   };
@@ -177,7 +176,7 @@ export class App extends React.Component<any, AppState> {
 			<h1> Get question from triviaAPI!</h1> 
 			  <button onClick={this.getQuestion}>Get question</button>
 			<br/> Question is: <br/>
-			<b>{this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} </b>
+      <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"}  />
           </label>
 		  
         </div>
@@ -191,7 +190,7 @@ export class App extends React.Component<any, AppState> {
             Correct answer: {this.state.correctAnswer} <br/>
             You have said: <b>{this.state.recordedText}</b>
             <br/>
-              Outcome: <b>{this.state.outcome}</b>
+              Outcome:  <Speak text={this.state.outcome}  />
           </label>
           <ol type="a">
               {answers}
