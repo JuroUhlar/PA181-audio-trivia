@@ -4,6 +4,7 @@ import './App.css';
 import Speak from './components/Speak';
 // @ts-ignore
 import Recorder from 'react-mp3-recorder';
+import { serverURL } from './config';
 
 interface AppState {
   text: string,
@@ -34,8 +35,26 @@ export class App extends React.Component<any, AppState> {
   input: React.RefObject<HTMLInputElement>;
 
   componentDidMount() {
-    this.getQuestion();
-  }
+    setTimeout(() => {
+      this.getQuestion();
+    }, 0);
+  };
+
+  //  Getne otazku - replace je kvůli tomu, že mi přijde &quot místo " a podobně,
+  //  nevěděl jsem jak to rychle po par pokusech jednoduše rozkodovat, tak je to takto skarede
+  //  takze to chce predelat
+  getQuestion = () => {
+    fetch('https://opentdb.com/api.php?amount=1&type=multiple')
+      .then(response => response.json())
+      .then(data => this.setState({
+        recordedText: "",
+        question: data.results[0].question.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
+        correctAnswer: data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
+        incorrectAnswers: data.results[0].incorrect_answers.map((x: any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')),
+        mixedAnswers: [...data.results[0].incorrect_answers.map((x: any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\''))]
+          .concat(data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')).sort(() => 0.5 - Math.random())
+      }));
+  };
 
   _onRecordingComplete = (blob: string | Blob | null) => {
     console.log('recording', blob);
@@ -43,7 +62,7 @@ export class App extends React.Component<any, AppState> {
       let fd = new FormData();
       fd.append('audio', blob);
 
-      fetch('http://localhost:5000/api/v1/recognize', {
+      fetch(`${serverURL}/api/v1/recognize`, {
         headers: { Accept: "application/json" },
         method: "POST", body: fd
       }).then(response => response.json())
@@ -116,21 +135,7 @@ export class App extends React.Component<any, AppState> {
   _onRecordingError = (err: any) => {
     console.log('recording error', err)
   };
-  //  Getne otazku - replace je kvůli tomu, že mi přijde &quot místo " a podobně,
-  //  nevěděl jsem jak to rychle po par pokusech jednoduše rozkodovat, tak je to takto skarede
-  //  takze to chce predelat
-  getQuestion = () => {
-    fetch('https://opentdb.com/api.php?amount=1&type=multiple')
-      .then(response => response.json())
-      .then(data => this.setState({
-        recordedText: "",
-        question: data.results[0].question.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
-        correctAnswer: data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
-        incorrectAnswers: data.results[0].incorrect_answers.map((x: any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')),
-        mixedAnswers: [...data.results[0].incorrect_answers.map((x: any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\''))]
-          .concat(data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')).sort(() => 0.5 - Math.random())
-      }));
-  };
+  
 
   getIndex(value: any, arr: any) {
     for (var i = 0; i < arr.length; i++) {
@@ -153,7 +158,7 @@ export class App extends React.Component<any, AppState> {
             <h1> Get question from triviaAPI!</h1>
             <button onClick={this.getQuestion}>Get question</button>
             <br /> Question is: <br />
-            <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} />
+            {this.state.question !== '' && <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} />}
           </label>
 
         </div>
