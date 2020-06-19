@@ -2,3 +2,18 @@
   text-align: center;
 }
 
+#answer_list {
+  width: 200px;
+  text-align: left;
+  margin: 0 auto;
+}
+
+
+ol > li {
+  list-style: none;
+}
+
+#next_question {
+  margin: 30px;
+}
+

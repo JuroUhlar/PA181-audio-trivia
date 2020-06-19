@@ -155,26 +155,29 @@ export class App extends React.Component<any, AppState> {
         return -1;
     };
 
+    getLetterOfCorrenctAnswer() {
+        return ['A', 'B', 'C', 'D'][this.state.mixedAnswers.indexOf(this.state.correctAnswer)];
+    }
+
     render() {
-        const answers = this.state.mixedAnswers.map((item) =>
-            <li key={item}>{item}</li>
+        const answers = this.state.mixedAnswers.map((item, index) =>
+            <li key={item}>{['A', 'B', 'C', 'D'][index]}) {item}</li>
         );
-        const question = `${this.state.question} a) ${this.state.mixedAnswers[0]}, b) ${this.state.mixedAnswers[1]}, c) ${this.state.mixedAnswers[2]}, d) ${this.state.mixedAnswers[3]}`
+        const questionAudio = `${this.state.question} a) ${this.state.mixedAnswers[0]}, b) ${this.state.mixedAnswers[1]}, c) ${this.state.mixedAnswers[2]}, d) ${this.state.mixedAnswers[3]}`;
         return (
             <div className="App">
 
                 <h1> Audio trivia game</h1>
                 {this.state.question !== '' &&
                     <div>
-                        <Speak text={question} />
-                        <ol type="A">
+                        <Speak text={questionAudio} />
+                        <p>{this.state.question}</p>
+                        <ol id='answer_list' type="A">
                             {answers}
                         </ol>
                     </div>}
-
-
                 <div>
-                    <button onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
+                    <button id="next_question" onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
                 </div>
 
                 {this.state.question !== '' &&
@@ -188,7 +191,8 @@ export class App extends React.Component<any, AppState> {
                         {this.state.recordedText !== '' &&
                             <div>
                                 <p>You have said: <b>{this.state.recordedText}</b></p>
-                                    Outcome: {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
+                                    Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}.
+                                    {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
                             </div>}
                     </div>}
             </div>
