@@ -14,12 +14,6 @@ export class Speak extends React.Component<SpeakProps> {
 
     audioRef: React.RefObject<HTMLAudioElement>;
 
-    // componentDidMount() {
-    //     setTimeout(() => {
-    //       this.audioRef.current?.play();
-    //     }, 5000);
-    //   };
-
     render() {
         return (
             <div className="App">

@@ -5,6 +5,7 @@ import Speak from './components/Speak';
 // @ts-ignore
 import Recorder from 'react-mp3-recorder';
 import { serverURL } from './config';
+import he from 'he';
 
 interface AppState {
   text: string,
@@ -46,14 +47,20 @@ export class App extends React.Component<any, AppState> {
   getQuestion = () => {
     fetch('https://opentdb.com/api.php?amount=1&type=multiple')
       .then(response => response.json())
-      .then(data => this.setState({
-        recordedText: "",
-        question: data.results[0].question.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
-        correctAnswer: data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\''),
-        incorrectAnswers: data.results[0].incorrect_answers.map((x: any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')),
-        mixedAnswers: [...data.results[0].incorrect_answers.map((x: any) => x.replace(/&quot;/g, '"').replace(/&#039;/g, '\''))]
-          .concat(data.results[0].correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, '\'')).sort(() => 0.5 - Math.random())
-      }));
+      .then(data => {
+        let questionInfo = data.results[0];
+        let question =  he.decode(questionInfo.question);
+        let correctAnswer = he.decode(questionInfo.correct_answer);
+        let incorrectAnswers = questionInfo.incorrect_answers.map((answer:any) => he.decode(answer));
+        let mixedAnswers = incorrectAnswers.concat(correctAnswer).sort(() => 0.5 - Math.random());
+        this.setState({
+          recordedText: '',
+          question,
+          correctAnswer,
+          incorrectAnswers,
+          mixedAnswers,
+        });
+      })
   };
 
   _onRecordingComplete = (blob: string | Blob | null) => {
@@ -114,6 +121,8 @@ export class App extends React.Component<any, AppState> {
       case "de":
       case "D.":
       case "T.":
+      case "the":
+      case "The":
         if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 3)
           return ("Correct!");
         else
@@ -157,7 +166,6 @@ export class App extends React.Component<any, AppState> {
           <h1> Audio trivia game</h1>
           <button onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
           <br /> Question is: <br />
-          {/* {this.state.question !== '' && <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} />} */}
           {this.state.question !== '' && <Speak text={question} />}
 
         </div>
@@ -172,7 +180,7 @@ export class App extends React.Component<any, AppState> {
             You have said: <b>{this.state.recordedText}</b>
             <br />
               Outcome:
-              {this.state.outcome !== '' && <Speak text={this.state.outcome} />}
+              {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
           </label>
           <ol type="a">
             {answers}
