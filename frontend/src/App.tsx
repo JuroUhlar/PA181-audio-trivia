@@ -34,11 +34,11 @@ export class App extends React.Component<any, AppState> {
 
   input: React.RefObject<HTMLInputElement>;
 
-  componentDidMount() {
-    setTimeout(() => {
-      this.getQuestion();
-    }, 0);
-  };
+  // componentDidMount() {
+  //   setTimeout(() => {
+  //     this.getQuestion();
+  //   }, 0);
+  // };
 
   //  Getne otazku - replace je kvůli tomu, že mi přijde &quot místo " a podobně,
   //  nevěděl jsem jak to rychle po par pokusech jednoduše rozkodovat, tak je to takto skarede
@@ -150,13 +150,15 @@ export class App extends React.Component<any, AppState> {
     const answers = this.state.mixedAnswers.map((item) =>
       <li key={item}>{item}</li>
     );
+    const question = `${this.state.question} a) ${this.state.mixedAnswers[0]}, b) ${this.state.mixedAnswers[1]}, c) ${this.state.mixedAnswers[2]}, d) ${this.state.mixedAnswers[3]}`
     return (
       <div className="App">
         <div id='triviaAPI'>
-          <h1> Get question from triviaAPI!</h1>
-          <button onClick={this.getQuestion}>Get question</button>
+          <h1> Audio trivia game</h1>
+          <button onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
           <br /> Question is: <br />
-          {this.state.question !== '' && <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} />}
+          {/* {this.state.question !== '' && <Speak text={this.state.question + " " + this.state.mixedAnswers.join("? or ") + "?"} />} */}
+          {this.state.question !== '' && <Speak text={question} />}
 
         </div>
         <div id='voiceRecord'>
@@ -169,7 +171,8 @@ export class App extends React.Component<any, AppState> {
             Correct answer: {this.state.correctAnswer} <br />
             You have said: <b>{this.state.recordedText}</b>
             <br />
-              Outcome:  <Speak text={this.state.outcome} />
+              Outcome:
+              {this.state.outcome !== '' && <Speak text={this.state.outcome} />}
           </label>
           <ol type="a">
             {answers}
