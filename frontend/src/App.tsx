@@ -18,6 +18,11 @@ interface AppState {
 }
 
 export class App extends React.Component<any, AppState> {
+    private game: {
+        points: number,
+        questionNumber: number,
+        totalQuestions: number,
+    };
 
     constructor(props: any) {
         super(props);
@@ -30,6 +35,12 @@ export class App extends React.Component<any, AppState> {
             correctAnswer: '',
             mixedAnswers: [],
             outcome: '',
+        };
+        this.game = {
+            points: 0,
+            questionNumber: 1,
+            totalQuestions: 10,
+
         }
     }
 
@@ -164,9 +175,18 @@ export class App extends React.Component<any, AppState> {
             <li key={item}>{['A', 'B', 'C', 'D'][index]}) {item}</li>
         );
         const questionAudio = `${this.state.question} a) ${this.state.mixedAnswers[0]}, b) ${this.state.mixedAnswers[1]}, c) ${this.state.mixedAnswers[2]}, d) ${this.state.mixedAnswers[3]}`;
+
+        let containerClass = 'container';
+        if (this.state.outcome === 'Correct!') {
+            containerClass += ' correct_answer';
+        }
+        if (this.state.outcome === 'Incorrect!') {
+            containerClass += ' incorrect_answer';
+        }
+
         return (
             <div className="App">
-
+                {console.log(this.state.outcome)}
                 <h1> Audio trivia game</h1>
                 {this.state.question !== '' &&
                     <div>
@@ -195,6 +215,47 @@ export class App extends React.Component<any, AppState> {
                                     {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
                             </div>}
                     </div>}
+
+
+
+
+
+                {this.state.question !== '' &&
+                <div className={containerClass}>
+                    <div id='container_header'>
+                        <p>Question: {this.game.questionNumber}/{this.game.totalQuestions}</p>
+                        <p>Total points: {this.game.points}</p>
+                        <button id="next_question" onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
+                    </div>
+
+                        {this.state.question !== '' &&
+                        <div id='container_question'>
+                            <Speak text={questionAudio} />
+                            <p><b>{this.state.question}</b></p>
+                            <hr></hr>
+                            <ol id='answer_list' type="A">
+                                {answers}
+                            </ol>
+                            <hr></hr>
+                        </div>}
+
+
+                        <div id='container_footer'>
+                            <Recorder
+                                onRecordingComplete={this._onRecordingComplete}
+                                onRecordingError={this._onRecordingError}
+                            />
+                            <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
+                            {/* Correct answer: {this.state.correctAnswer} <br /> */}
+                            {this.state.recordedText !== '' &&
+                            <div>
+                                <p>You have said: <b>{this.state.recordedText}</b></p>
+                                Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}.
+                                {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
+                            </div>}
+                        </div>
+
+                </div>}
             </div>
         );
     }
