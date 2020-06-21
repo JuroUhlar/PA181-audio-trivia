@@ -57,3 +57,42 @@ ol > li {
   line-height: 0;
   height: 0;
 }
+
+.answered.error {
+  font-size: 1rem;
+  line-height: 0;
+  height: 0;
+}
+
+.hidden {
+  display:none;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-style: solid;
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: cornsilk;
+}
+
+.result_header {
+  font-size: 2rem;
+  line-height: 0;
+}
+
+.result_info {
+  font-size: 1.5rem;
+  margin-bottom: 18px;
+}
+
+#result_form {
+  margin: 0 0 30px 0;
+}
+
+.result_form_input{
+  margin: 10px;
+}
+

@@ -9,6 +9,7 @@ import he from 'he';
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import { css } from "@emotion/core";
 import BeatLoader from "react-spinners/BeatLoader";
+import { recordScore } from "./utils/recordScore"
 
 
 interface AppState {
@@ -21,6 +22,9 @@ interface AppState {
     outcome: string,
     loading: boolean,
     recordingEnabled: boolean,
+    playerName: string,
+    hideResult: boolean,
+    hideScoreboard: boolean,
 }
 
 enum AnswerState {
@@ -52,31 +56,61 @@ export class App extends React.Component<any, AppState> {
             outcome: '',
             loading: false,
             recordingEnabled: true,
+            playerName: 'unnamed',
+            hideResult: true,
+            hideScoreboard: true,
         };
         this.game = {
             containerClass: 'container',
             points: 0,
             questionNumber: 1,
-            totalQuestions: 10,
+            totalQuestions: 3,
             answerState: AnswerState.Unaswered,
-        }
+        };
+        this.sendResult = this.sendResult.bind(this);
+
     }
 
     input: React.RefObject<HTMLInputElement>;
 
-    // componentDidMount() {
-    //   setTimeout(() => {
-    //     this.getQuestion();
-    //   }, 0);
-    // };
+    restartGame = (event : any) => {
+        event.preventDefault();
+        this.getQuestion();
+        this.game.questionNumber = 1;
+        this.game.points = 0;
+        this.game.containerClass = 'container';
+        this.game.answerState = AnswerState.Unaswered;
+        this.setState({
+            hideResult: true,
+            hideScoreboard: true,
+            recordingEnabled: true,
+            outcome: '',
+        });
+    };
+
+    showScoreboard = () => {
+        this.setState({
+            hideResult: true,
+            hideScoreboard: false,
+        });
+    };
+
+    sendResult (event : any) {
+        event.preventDefault();
+        recordScore(this.state.playerName, this.game.totalQuestions,this.game.points);
+        this.showScoreboard();
+    };
+
+    changeNameHandler = (event : any) => {
+        this.setState({playerName: event.target.value});
+    };
 
     evaluateGame = () => {
-        console.log(this.game.answerState);
-        if (this.state.outcome === "Correct!" || this.state.outcome === "Incorrect!") {
-            if (this.state.outcome === "Correct!") {
+        if (this.game.answerState === AnswerState.Correct || this.game.answerState === AnswerState.Incorrect) {
+            if (this.game.answerState === AnswerState.Correct) {
                 this.game.points += 1;
                 this.game.containerClass += ' correct_answer';
-            } else {
+            } else if (this.game.answerState === AnswerState.Incorrect) {
                 this.game.containerClass += ' incorrect_answer';
             }
 
@@ -84,14 +118,24 @@ export class App extends React.Component<any, AppState> {
                 recordingEnabled : false
             });
             setTimeout(() => {
-                this.getQuestion();
-                this.game.containerClass = 'container';
-                this.game.answerState = AnswerState.Unaswered;
-                this.setState({
-                    recordingEnabled : true,
-                    outcome: '',
-                });
-                this.game.questionNumber += 1;
+                // If game over, show result. Else proceed to next question
+                if (this.game.questionNumber === this.game.totalQuestions) {
+                    this.game.containerClass += ' hidden';
+                    //this.game.hideResult = false;
+                    this.setState({
+                        hideResult: false,
+                    });
+                } else {
+                    this.getQuestion();
+                    this.game.questionNumber += 1;
+                    this.game.containerClass = 'container';
+                    this.game.answerState = AnswerState.Unaswered;
+                    this.setState({
+                        recordingEnabled: true,
+                        outcome: '',
+                    });
+                }
+
                 }, 3000);
         }
     };
@@ -135,15 +179,15 @@ export class App extends React.Component<any, AppState> {
                     this.setState({
                         loading : false
                     });
-                    if (response.result.results.length !== 0) {
+
+                    if (response.status === 200 && response.result.results.length !== 0) {
                         this.setState(() => ({
                             recordedText: response.result.results[response.result.results.length - 1].alternatives[0].transcript,
                             outcome: this.getOutcome(response.result.results[response.result.results.length - 1].alternatives[0].transcript),
                         }));
+                        this.game.answerState = this.getOutcome2(response.result.results[response.result.results.length - 1].alternatives[0].transcript);
                         this.evaluateGame();
                     }
-                    this.game.answerState = this.getOutcome2(response.result.results[response.result.results.length - 1].alternatives[0].transcript);
-                    console.log(this.game.answerState);
                 });
         }
     };
@@ -267,7 +311,6 @@ export class App extends React.Component<any, AppState> {
         console.log('recording error', err)
     };
 
-
     getIndex(value: any, arr: any) {
         for (var i = 0; i < arr.length; i++) {
             if (arr[i] === value) {
@@ -304,7 +347,7 @@ export class App extends React.Component<any, AppState> {
                 }
 
                 {this.state.question !== '' &&
-                <div className={this.game.containerClass}>
+                <div className={this.game.containerClass} >
                     <div id='container_header'>
                         <p>Question: {this.game.questionNumber}/{this.game.totalQuestions}</p>
                         <p>Total points: {this.game.points}</p>
@@ -323,7 +366,8 @@ export class App extends React.Component<any, AppState> {
 
 
                         <div id='container_footer'>
-                            {!this.state.loading && this.state.recordingEnabled &&
+                            {!this.state.loading &&
+                            this.state.recordingEnabled &&
                             <div>
                                 <Recorder
                                 onRecordingComplete={this._onRecordingComplete}
@@ -366,12 +410,45 @@ export class App extends React.Component<any, AppState> {
                         </div>
 
                 </div>}
-                {this.state.recordedText !== '' &&
-                <div>
-                    <p>You have said: <b>{this.state.recordedText}</b></p>
-                    Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}
-                    }
-                </div>}
+
+                <div className={this.state.hideResult ? 'hidden' : ''}>
+                    <div className='result'>
+                        <div className='result_header'>
+                            <p><b>Game over</b></p>
+                        </div>
+                        <div className='result_info'>
+                            <hr></hr>
+                            <p>Answered question: {this.game.totalQuestions}</p>
+                            <p>Total points: {this.game.points}</p>
+                            <hr></hr>
+                        </div>
+                        <div id='result_form'>
+                            <form onSubmit={this.sendResult}>
+                                <label>
+                                    Please enter your name:
+                                </label>
+                                <input className='result_form_input' type="text" name="name" onChange={this.changeNameHandler} />
+                                <br></br>
+                                <input type="submit" value="Submit" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={this.state.hideScoreboard ? 'hidden' : ''}>
+                    <div className='result'>
+                        <div className='result_header'>
+                            <p><b>Thank you</b></p>
+                        </div>
+                        <div className='result_info'>
+                            <hr></hr>
+                            <a href="https://airtable.com/shrVrimG7knh2rs2x/tblu1pdeoNmDChudO/viw9kfdNc3Wo6APHF?blocks=hide" target="_blank">Click here to see scoreboard</a>
+                            <br></br>
+                            <button onClick={this.restartGame}>Restart game</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         );
     }
