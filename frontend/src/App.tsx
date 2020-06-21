@@ -6,6 +6,10 @@ import Speak from './components/Speak';
 import Recorder from 'react-mp3-recorder';
 import { serverURL } from './config';
 import he from 'he';
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
+import { css } from "@emotion/core";
+import BeatLoader from "react-spinners/BeatLoader";
+
 
 interface AppState {
     text: string,
@@ -15,14 +19,24 @@ interface AppState {
     correctAnswer: string,
     mixedAnswers: string[],
     outcome: string,
+    loading: boolean,
+    recordingEnabled: boolean,
+}
+
+enum AnswerState {
+    Correct,
+    Incorrect,
+    Unaswered,
+    Error
 }
 
 export class App extends React.Component<any, AppState> {
     private game: {
+        containerClass: string;
         points: number,
         questionNumber: number,
         totalQuestions: number,
-        answered: boolean,
+        answerState: AnswerState,
     };
 
     constructor(props: any) {
@@ -36,12 +50,15 @@ export class App extends React.Component<any, AppState> {
             correctAnswer: '',
             mixedAnswers: [],
             outcome: '',
+            loading: false,
+            recordingEnabled: true,
         };
         this.game = {
+            containerClass: 'container',
             points: 0,
             questionNumber: 1,
             totalQuestions: 10,
-            answered: false,
+            answerState: AnswerState.Unaswered,
         }
     }
 
@@ -54,25 +71,28 @@ export class App extends React.Component<any, AppState> {
     // };
 
     evaluateGame = () => {
-        if (!this.game.answered) {
-            if (this.state.outcome === "Correct!" || this.state.outcome === "Incorrect!") {
-                this.game.answered = true;
+        console.log(this.game.answerState);
+        if (this.state.outcome === "Correct!" || this.state.outcome === "Incorrect!") {
+            if (this.state.outcome === "Correct!") {
+                this.game.points += 1;
+                this.game.containerClass += ' correct_answer';
+            } else {
+                this.game.containerClass += ' incorrect_answer';
             }
 
-            if (this.game.answered) {
-                if (this.state.outcome === "Correct!") {
-                    this.game.points += 1;
-                    console.log("added one point")
-                }
+            this.setState({
+                recordingEnabled : false
+            });
+            setTimeout(() => {
+                this.getQuestion();
+                this.game.containerClass = 'container';
+                this.game.answerState = AnswerState.Unaswered;
                 this.setState({
+                    recordingEnabled : true,
                     outcome: '',
                 });
                 this.game.questionNumber += 1;
-                this.getQuestion();
-                this.game.answered = false;
-                console.log("in answered")
-            }
-            console.log("in eval");
+                }, 3000);
         }
     };
 
@@ -101,6 +121,9 @@ export class App extends React.Component<any, AppState> {
     _onRecordingComplete = (blob: string | Blob | null) => {
         console.log('recording', blob);
         if (blob !== null) {
+            this.setState({
+                loading : true
+            });
             let fd = new FormData();
             fd.append('audio', blob);
 
@@ -109,12 +132,18 @@ export class App extends React.Component<any, AppState> {
                 method: "POST", body: fd
             }).then(response => response.json())
                 .then(response => {
+                    this.setState({
+                        loading : false
+                    });
                     if (response.result.results.length !== 0) {
                         this.setState(() => ({
                             recordedText: response.result.results[response.result.results.length - 1].alternatives[0].transcript,
-                            outcome: this.getOutcome(response.result.results[response.result.results.length - 1].alternatives[0].transcript)
-                        }))
+                            outcome: this.getOutcome(response.result.results[response.result.results.length - 1].alternatives[0].transcript),
+                        }));
+                        this.evaluateGame();
                     }
+                    this.game.answerState = this.getOutcome2(response.result.results[response.result.results.length - 1].alternatives[0].transcript);
+                    console.log(this.game.answerState);
                 });
         }
     };
@@ -168,12 +197,70 @@ export class App extends React.Component<any, AppState> {
             case "questions":
             case "Christian.":
             case "christian":
-                {
-                    this.getQuestion();
-                    return ("");
-                }
+            {
+                this.getQuestion();
+                return ("");
+            }
             default:
                 return ('Unable to process! Please, try to record your answer again!');
+        }
+    }
+
+    getOutcome2(recordedText: any) {
+        switch (recordedText.trim()) {
+            case "a":
+            case "hey":
+            case "Hey":
+            case "hey you":
+            case "our":
+            case "A.":
+            case "eight":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 0)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "b":
+            case "bee":
+            case "be":
+            case "e":
+            case "B.":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 1)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "c":
+            case "see":
+            case "sea":
+            case "ce":
+            case "C.":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 2)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "d":
+            case "deer":
+            case "dear":
+            case "de":
+            case "D.":
+            case "T.":
+            case "the":
+            case "The":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 3)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "Question.":
+            case "Questions.":
+            case "question":
+            case "questions":
+            case "Christian.":
+            case "christian":
+                {
+                    this.getQuestion();
+                    return (AnswerState.Unaswered);
+                }
+            default:
+                return (AnswerState.Error);
         }
     }
     _onRecordingError = (err: any) => {
@@ -200,55 +287,27 @@ export class App extends React.Component<any, AppState> {
         );
         const questionAudio = `${this.state.question} a) ${this.state.mixedAnswers[0]}, b) ${this.state.mixedAnswers[1]}, c) ${this.state.mixedAnswers[2]}, d) ${this.state.mixedAnswers[3]}`;
 
-        let containerClass = 'container';
-        if (this.state.outcome === 'Correct!') {
-            containerClass += ' correct_answer';
-        }
-        if (this.state.outcome === 'Incorrect!') {
-            containerClass += ' incorrect_answer';
-        }
+        const spinnerCss = css`
+              display: block;
+              margin: 0 auto;
+              margin-top: 20px;
+              border-color: red;
+            `;
 
         return (
             <div className="App">
                 <h1> Audio trivia game</h1>
-                {this.state.question !== '' &&
-                    <div>
-                        <Speak text={questionAudio} />
-                        <p>{this.state.question}</p>
-                        <ol id='answer_list' type="A">
-                            {answers}
-                        </ol>
-                    </div>}
+                {this.state.question === '' &&
                 <div>
-                    <button id="next_question" onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
+                    <button id="next_question" onClick={this.getQuestion}> Start game</button>
                 </div>
+                }
 
                 {this.state.question !== '' &&
-                    <div id='voiceRecord'>
-                        <Recorder
-                            onRecordingComplete={this._onRecordingComplete}
-                            onRecordingError={this._onRecordingError}
-                        />
-                        <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
-                        {/* Correct answer: {this.state.correctAnswer} <br /> */}
-                        {this.state.recordedText !== '' &&
-                            <div>
-                                <p>You have said: <b>{this.state.recordedText}</b></p>
-                                    Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}.
-                                    {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
-                            </div>}
-                    </div>}
-
-
-
-
-
-                {this.state.question !== '' &&
-                <div className={containerClass}>
+                <div className={this.game.containerClass}>
                     <div id='container_header'>
                         <p>Question: {this.game.questionNumber}/{this.game.totalQuestions}</p>
                         <p>Total points: {this.game.points}</p>
-                        <button id="next_question" onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
                     </div>
 
                         {this.state.question !== '' &&
@@ -264,21 +323,54 @@ export class App extends React.Component<any, AppState> {
 
 
                         <div id='container_footer'>
-                            <Recorder
+                            {!this.state.loading && this.state.recordingEnabled &&
+                            <div>
+                                <Recorder
                                 onRecordingComplete={this._onRecordingComplete}
                                 onRecordingError={this._onRecordingError}
                             />
-                            <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
-                            {/* Correct answer: {this.state.correctAnswer} <br /> */}
-                            {this.state.recordedText !== '' &&
+                                <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
+                            </div>}
+
+                            {this.state.loading &&
                             <div>
-                                <p>You have said: <b>{this.state.recordedText}</b></p>
-                                Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}.
-                                {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
-                                {this.state.outcome !== '' && this.evaluateGame()}
+                                <BeatLoader
+                                    css={spinnerCss}
+                                    size={30}
+                                    color={"#ff8c00"}
+                                    loading={this.state.loading}
+                                />
+                            </div>
+                            }
+
+                            {this.game.answerState === AnswerState.Correct &&
+                            <div className='answered'>
+                                <p>Correct!</p>
+                            </div>}
+
+                            {this.game.answerState === AnswerState.Incorrect &&
+                            <div className='answered'>
+                                <p>Incorrect!</p>
+                            </div>}
+
+                            {this.game.answerState === AnswerState.Error &&
+                            <div className='answered_error'>
+                                <p>Unable to process! Please, try to record your answer again!</p>
+                            </div>}
+
+                            {/* Correct answer: {this.state.correctAnswer} <br /> */}
+                            {this.state.recordedText !== '' && this.state.outcome !== '' &&
+                            <div>
+                                {<Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
                             </div>}
                         </div>
 
+                </div>}
+                {this.state.recordedText !== '' &&
+                <div>
+                    <p>You have said: <b>{this.state.recordedText}</b></p>
+                    Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}
+                    }
                 </div>}
             </div>
         );
