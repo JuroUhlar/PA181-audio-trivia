@@ -22,6 +22,7 @@ export class App extends React.Component<any, AppState> {
         points: number,
         questionNumber: number,
         totalQuestions: number,
+        answered: boolean,
     };
 
     constructor(props: any) {
@@ -40,7 +41,7 @@ export class App extends React.Component<any, AppState> {
             points: 0,
             questionNumber: 1,
             totalQuestions: 10,
-
+            answered: false,
         }
     }
 
@@ -51,6 +52,29 @@ export class App extends React.Component<any, AppState> {
     //     this.getQuestion();
     //   }, 0);
     // };
+
+    evaluateGame = () => {
+        if (!this.game.answered) {
+            if (this.state.outcome === "Correct!" || this.state.outcome === "Incorrect!") {
+                this.game.answered = true;
+            }
+
+            if (this.game.answered) {
+                if (this.state.outcome === "Correct!") {
+                    this.game.points += 1;
+                    console.log("added one point")
+                }
+                this.setState({
+                    outcome: '',
+                });
+                this.game.questionNumber += 1;
+                this.getQuestion();
+                this.game.answered = false;
+                console.log("in answered")
+            }
+            console.log("in eval");
+        }
+    };
 
     //  Getne otazku - replace je kvůli tomu, že mi přijde &quot místo " a podobně,
     //  nevěděl jsem jak to rychle po par pokusech jednoduše rozkodovat, tak je to takto skarede
@@ -186,7 +210,6 @@ export class App extends React.Component<any, AppState> {
 
         return (
             <div className="App">
-                {console.log(this.state.outcome)}
                 <h1> Audio trivia game</h1>
                 {this.state.question !== '' &&
                     <div>
@@ -252,6 +275,7 @@ export class App extends React.Component<any, AppState> {
                                 <p>You have said: <b>{this.state.recordedText}</b></p>
                                 Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}.
                                 {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
+                                {this.state.outcome !== '' && this.evaluateGame()}
                             </div>}
                         </div>
 
