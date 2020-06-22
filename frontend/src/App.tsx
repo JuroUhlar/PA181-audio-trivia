@@ -9,11 +9,13 @@ import he from 'he';
 import { css } from "@emotion/core";
 import BeatLoader from "react-spinners/BeatLoader";
 import { recordScore } from "./utils/recordScore"
+import { getLetter } from './utils/getLetter';
 
 
 interface AppState {
     text: string,
     recordedText: string,
+    recordedLetter: string,
     question: string,
     incorrectAnswers: string[],
     correctAnswer: string,
@@ -48,6 +50,7 @@ export class App extends React.Component<any, AppState> {
         this.state = {
             text: 'Say something',
             recordedText: '',
+            recordedLetter: '',
             question: '',
             incorrectAnswers: [],
             correctAnswer: '',
@@ -72,7 +75,7 @@ export class App extends React.Component<any, AppState> {
 
     input: React.RefObject<HTMLInputElement>;
 
-    restartGame = (event : any) => {
+    restartGame = (event: any) => {
         event.preventDefault();
         this.getQuestion();
         this.game.questionNumber = 1;
@@ -94,14 +97,14 @@ export class App extends React.Component<any, AppState> {
         });
     };
 
-    sendResult (event : any) {
+    sendResult(event: any) {
         event.preventDefault();
-        recordScore(this.state.playerName, this.game.totalQuestions,this.game.points);
+        recordScore(this.state.playerName, this.game.totalQuestions, this.game.points);
         this.showScoreboard();
     };
 
-    changeNameHandler = (event : any) => {
-        this.setState({playerName: event.target.value});
+    changeNameHandler = (event: any) => {
+        this.setState({ playerName: event.target.value });
     };
 
     evaluateGame = () => {
@@ -114,7 +117,7 @@ export class App extends React.Component<any, AppState> {
             }
 
             this.setState({
-                recordingEnabled : false
+                recordingEnabled: false
             });
             setTimeout(() => {
                 // If game over, show result. Else proceed to next question
@@ -135,7 +138,7 @@ export class App extends React.Component<any, AppState> {
                     });
                 }
 
-                }, 8000);
+            }, 8000);
         }
     };
 
@@ -153,6 +156,7 @@ export class App extends React.Component<any, AppState> {
                 let mixedAnswers = incorrectAnswers.concat(correctAnswer).sort(() => 0.5 - Math.random());
                 this.setState({
                     recordedText: '',
+                    recordedLetter: '',
                     question,
                     correctAnswer,
                     incorrectAnswers,
@@ -165,7 +169,7 @@ export class App extends React.Component<any, AppState> {
         console.log('recording', blob);
         if (blob !== null) {
             this.setState({
-                loading : true
+                loading: true
             });
             let fd = new FormData();
             fd.append('audio', blob);
@@ -176,74 +180,51 @@ export class App extends React.Component<any, AppState> {
             }).then(response => response.json())
                 .then(response => {
                     this.setState({
-                        loading : false
+                        loading: false
                     });
 
                     if (response.status === 200 && response.result.results.length !== 0) {
+                        let recordedText = response.result.results[response.result.results.length - 1].alternatives[0].transcript;
+                        let recordedLetter = getLetter(recordedText)
                         this.setState(() => ({
-                            recordedText: response.result.results[response.result.results.length - 1].alternatives[0].transcript,
-                            outcome: this.getOutcome(response.result.results[response.result.results.length - 1].alternatives[0].transcript),
+                            recordedText,
+                            recordedLetter,
+                            outcome: this.getOutcome(recordedLetter),
                         }));
-                        this.game.answerState = this.getOutcome2(response.result.results[response.result.results.length - 1].alternatives[0].transcript);
+                        this.game.answerState = this.getOutcome2(recordedText);
                         this.evaluateGame();
                     }
                 });
         }
     };
 
-    getOutcome(recordedText: any) {
-        switch (recordedText.trim()) {
-            case "a":
-            case "hey":
-            case "Hey":
-            case "hey you":
-            case "our":
-            case "A.":
-            case "eight":
+    getOutcome(recordedLetter: string) {
+        switch (recordedLetter) {
+            case "A":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 0)
                     return ("Correct!");
                 else
                     return ("Incorrect!");
-            case "b":
-            case "bee":
-            case "be":
-            case "e":
-            case "B.":
+            case "B":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 1)
                     return ("Correct!");
                 else
                     return ("Incorrect!");
-            case "c":
-            case "see":
-            case "sea":
-            case "ce":
-            case "C.":
+            case "C":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 2)
                     return ("Correct!");
                 else
                     return ("Incorrect!");
-            case "d":
-            case "deer":
-            case "dear":
-            case "de":
-            case "D.":
-            case "T.":
-            case "the":
-            case "The":
+            case "D":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 3)
                     return ("Correct!");
                 else
                     return ("Incorrect!");
-            case "Question.":
-            case "Questions.":
-            case "question":
-            case "questions":
-            case "Christian.":
-            case "christian":
-            {
-                this.getQuestion();
-                return ("");
-            }
+            case "Question":
+                {
+                    this.getQuestion();
+                    return ("");
+                }
             default:
                 return ('Unable to process! Please, try to record your answer again!');
         }
@@ -324,8 +305,9 @@ export class App extends React.Component<any, AppState> {
     }
 
     render() {
+        let userAnswerIndex = ['A', 'B', 'C', 'D'].indexOf(this.state.recordedLetter);
         const answers = this.state.mixedAnswers.map((item, index) =>
-            <li key={item}>{['A', 'B', 'C', 'D'][index]}) {item}</li>
+            <li key={item} className={index === userAnswerIndex ? 'selected_answer' : ''}>{['A', 'B', 'C', 'D'][index]}) {item}</li>
         );
         const questionAudio = `${this.state.question} a) ${this.state.mixedAnswers[0]}, b) ${this.state.mixedAnswers[1]}, c) ${this.state.mixedAnswers[2]}, d) ${this.state.mixedAnswers[3]}`;
 
@@ -340,75 +322,75 @@ export class App extends React.Component<any, AppState> {
             <div className="App">
                 <h1> Audio trivia game</h1>
                 {this.state.question === '' &&
-                <div>
-                    <button id="next_question" onClick={this.getQuestion}> Start game</button>
-                </div>
+                    <div>
+                        <button id="next_question" onClick={this.getQuestion}> Start game</button>
+                    </div>
                 }
 
                 {this.state.question !== '' &&
-                <div className={this.game.containerClass} >
-                    <div id='container_header'>
-                        <p>Question: {this.game.questionNumber}/{this.game.totalQuestions}</p>
-                        <p>Total points: {this.game.points}</p>
-                    </div>
+                    <div className={this.game.containerClass} >
+                        <div id='container_header'>
+                            <p>Question: {this.game.questionNumber}/{this.game.totalQuestions}</p>
+                            <p>Total points: {this.game.points}</p>
+                        </div>
 
                         {this.state.question !== '' &&
-                        <div id='container_question'>
-                            <Speak text={questionAudio} />
-                            <p><b>{this.state.question}</b></p>
-                            <hr></hr>
-                            <ol id='answer_list' type="A">
-                                {answers}
-                            </ol>
-                            <hr></hr>
-                        </div>}
+                            <div id='container_question'>
+                                <Speak text={questionAudio} />
+                                <p><b>{this.state.question}</b></p>
+                                <hr></hr>
+                                <ol id='answer_list' type="A">
+                                    {answers}
+                                </ol>
+                                <hr></hr>
+                            </div>}
 
 
                         <div id='container_footer'>
                             {!this.state.loading &&
-                            this.state.recordingEnabled &&
-                            <div>
-                                <Recorder
-                                onRecordingComplete={this._onRecordingComplete}
-                                onRecordingError={this._onRecordingError}
-                            />
-                                <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
-                            </div>}
+                                this.state.recordingEnabled &&
+                                <div>
+                                    <Recorder
+                                        onRecordingComplete={this._onRecordingComplete}
+                                        onRecordingError={this._onRecordingError}
+                                    />
+                                    <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
+                                </div>}
 
                             {this.state.loading &&
-                            <div>
-                                <BeatLoader
-                                    css={spinnerCss}
-                                    size={30}
-                                    color={"#ff8c00"}
-                                    loading={this.state.loading}
-                                />
-                            </div>
+                                <div>
+                                    <BeatLoader
+                                        css={spinnerCss}
+                                        size={30}
+                                        color={"#ff8c00"}
+                                        loading={this.state.loading}
+                                    />
+                                </div>
                             }
 
                             {this.game.answerState === AnswerState.Correct &&
-                            <div className='answered'>
-                                <p>Correct! The answer is {this.state.correctAnswer}.</p>
-                            </div>}
+                                <div className='answered'>
+                                    <p>Correct! The answer is {this.state.correctAnswer}.</p>
+                                </div>}
 
                             {this.game.answerState === AnswerState.Incorrect &&
-                            <div className='answered'>
-                                <p>Incorrect! The answer is {this.state.correctAnswer}.</p>
-                            </div>}
+                                <div className='answered'>
+                                    <p>Incorrect! The answer is {this.state.correctAnswer}.</p>
+                                </div>}
 
                             {this.game.answerState === AnswerState.Error &&
-                            <div className='answered_error'>
-                                <p>Unable to process! Please, try to record your answer again!</p>
-                            </div>}
+                                <div className='answered_error'>
+                                    <p>Unable to process! Please, try to record your answer again!</p>
+                                </div>}
 
                             {/* Correct answer: {this.state.correctAnswer} <br /> */}
                             {this.state.recordedText !== '' && this.state.outcome !== '' &&
-                            <div>
-                                {<Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
-                            </div>}
+                                <div>
+                                    {<Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
+                                </div>}
                         </div>
 
-                </div>}
+                    </div>}
 
                 <div className={this.state.hideResult ? 'hidden' : ''}>
                     <div className='result'>
@@ -441,7 +423,7 @@ export class App extends React.Component<any, AppState> {
                         </div>
                         <div className='result_info'>
                             <hr></hr>
-                            <a href="https://airtable.com/shrVrimG7knh2rs2x/tblu1pdeoNmDChudO/viw9kfdNc3Wo6APHF?blocks=hide"  rel="noopener noreferrer" target="_blank">Click here to see scoreboard</a>
+                            <a href="https://airtable.com/shrVrimG7knh2rs2x/tblu1pdeoNmDChudO/viw9kfdNc3Wo6APHF?blocks=hide" rel="noopener noreferrer" target="_blank">Click here to see scoreboard</a>
                             <br></br>
                             <button onClick={this.restartGame}>Restart game</button>
                         </div>

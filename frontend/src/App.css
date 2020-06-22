@@ -98,3 +98,8 @@ ol > li {
   margin: 10px;
 }
 
+
+.selected_answer {
+  border: 2px solid black;
+}
+
