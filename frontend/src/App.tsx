@@ -6,7 +6,6 @@ import Speak from './components/Speak';
 import Recorder from 'react-mp3-recorder';
 import { serverURL } from './config';
 import he from 'he';
-import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import { css } from "@emotion/core";
 import BeatLoader from "react-spinners/BeatLoader";
 import { recordScore } from "./utils/recordScore"
