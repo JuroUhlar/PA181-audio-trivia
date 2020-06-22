@@ -135,7 +135,7 @@ export class App extends React.Component<any, AppState> {
                     });
                 }
 
-                }, 3000);
+                }, 8000);
         }
     };
 
@@ -388,12 +388,12 @@ export class App extends React.Component<any, AppState> {
 
                             {this.game.answerState === AnswerState.Correct &&
                             <div className='answered'>
-                                <p>Correct!</p>
+                                <p>Correct! The answer is {this.state.correctAnswer}.</p>
                             </div>}
 
                             {this.game.answerState === AnswerState.Incorrect &&
                             <div className='answered'>
-                                <p>Incorrect!</p>
+                                <p>Incorrect! The answer is {this.state.correctAnswer}.</p>
                             </div>}
 
                             {this.game.answerState === AnswerState.Error &&
@@ -417,7 +417,7 @@ export class App extends React.Component<any, AppState> {
                         </div>
                         <div className='result_info'>
                             <hr></hr>
-                            <p>Answered question: {this.game.totalQuestions}</p>
+                            <p>Answered questions: {this.game.totalQuestions}</p>
                             <p>Total points: {this.game.points}</p>
                             <hr></hr>
                         </div>
