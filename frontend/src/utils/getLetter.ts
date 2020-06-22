@@ -13,6 +13,10 @@ export const getLetter = (transcript: string) =>  {
         case "be":
         case "e":
         case "B.":
+        case "Pee":
+        case "P":
+        case "p":
+        case "P.":
             return 'B'
         case "c":
         case "see":
