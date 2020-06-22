@@ -441,7 +441,7 @@ export class App extends React.Component<any, AppState> {
                         </div>
                         <div className='result_info'>
                             <hr></hr>
-                            <a href="https://airtable.com/shrVrimG7knh2rs2x/tblu1pdeoNmDChudO/viw9kfdNc3Wo6APHF?blocks=hide" target="_blank">Click here to see scoreboard</a>
+                            <a href="https://airtable.com/shrVrimG7knh2rs2x/tblu1pdeoNmDChudO/viw9kfdNc3Wo6APHF?blocks=hide"  rel="noopener noreferrer" target="_blank">Click here to see scoreboard</a>
                             <br></br>
                             <button onClick={this.restartGame}>Restart game</button>
                         </div>
