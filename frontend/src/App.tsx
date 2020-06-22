@@ -6,6 +6,10 @@ import Speak from './components/Speak';
 import Recorder from 'react-mp3-recorder';
 import { serverURL } from './config';
 import he from 'he';
+import { css } from "@emotion/core";
+import BeatLoader from "react-spinners/BeatLoader";
+import { recordScore } from "./utils/recordScore"
+
 
 interface AppState {
     text: string,
@@ -15,9 +19,28 @@ interface AppState {
     correctAnswer: string,
     mixedAnswers: string[],
     outcome: string,
+    loading: boolean,
+    recordingEnabled: boolean,
+    playerName: string,
+    hideResult: boolean,
+    hideScoreboard: boolean,
+}
+
+enum AnswerState {
+    Correct,
+    Incorrect,
+    Unaswered,
+    Error
 }
 
 export class App extends React.Component<any, AppState> {
+    private game: {
+        containerClass: string;
+        points: number,
+        questionNumber: number,
+        totalQuestions: number,
+        answerState: AnswerState,
+    };
 
     constructor(props: any) {
         super(props);
@@ -30,16 +53,91 @@ export class App extends React.Component<any, AppState> {
             correctAnswer: '',
             mixedAnswers: [],
             outcome: '',
-        }
+            loading: false,
+            recordingEnabled: true,
+            playerName: 'unnamed',
+            hideResult: true,
+            hideScoreboard: true,
+        };
+        this.game = {
+            containerClass: 'container',
+            points: 0,
+            questionNumber: 1,
+            totalQuestions: 3,
+            answerState: AnswerState.Unaswered,
+        };
+        this.sendResult = this.sendResult.bind(this);
+
     }
 
     input: React.RefObject<HTMLInputElement>;
 
-    // componentDidMount() {
-    //   setTimeout(() => {
-    //     this.getQuestion();
-    //   }, 0);
-    // };
+    restartGame = (event : any) => {
+        event.preventDefault();
+        this.getQuestion();
+        this.game.questionNumber = 1;
+        this.game.points = 0;
+        this.game.containerClass = 'container';
+        this.game.answerState = AnswerState.Unaswered;
+        this.setState({
+            hideResult: true,
+            hideScoreboard: true,
+            recordingEnabled: true,
+            outcome: '',
+        });
+    };
+
+    showScoreboard = () => {
+        this.setState({
+            hideResult: true,
+            hideScoreboard: false,
+        });
+    };
+
+    sendResult (event : any) {
+        event.preventDefault();
+        recordScore(this.state.playerName, this.game.totalQuestions,this.game.points);
+        this.showScoreboard();
+    };
+
+    changeNameHandler = (event : any) => {
+        this.setState({playerName: event.target.value});
+    };
+
+    evaluateGame = () => {
+        if (this.game.answerState === AnswerState.Correct || this.game.answerState === AnswerState.Incorrect) {
+            if (this.game.answerState === AnswerState.Correct) {
+                this.game.points += 1;
+                this.game.containerClass += ' correct_answer';
+            } else if (this.game.answerState === AnswerState.Incorrect) {
+                this.game.containerClass += ' incorrect_answer';
+            }
+
+            this.setState({
+                recordingEnabled : false
+            });
+            setTimeout(() => {
+                // If game over, show result. Else proceed to next question
+                if (this.game.questionNumber === this.game.totalQuestions) {
+                    this.game.containerClass += ' hidden';
+                    //this.game.hideResult = false;
+                    this.setState({
+                        hideResult: false,
+                    });
+                } else {
+                    this.getQuestion();
+                    this.game.questionNumber += 1;
+                    this.game.containerClass = 'container';
+                    this.game.answerState = AnswerState.Unaswered;
+                    this.setState({
+                        recordingEnabled: true,
+                        outcome: '',
+                    });
+                }
+
+                }, 8000);
+        }
+    };
 
     //  Getne otazku - replace je kvůli tomu, že mi přijde &quot místo " a podobně,
     //  nevěděl jsem jak to rychle po par pokusech jednoduše rozkodovat, tak je to takto skarede
@@ -66,6 +164,9 @@ export class App extends React.Component<any, AppState> {
     _onRecordingComplete = (blob: string | Blob | null) => {
         console.log('recording', blob);
         if (blob !== null) {
+            this.setState({
+                loading : true
+            });
             let fd = new FormData();
             fd.append('audio', blob);
 
@@ -74,11 +175,17 @@ export class App extends React.Component<any, AppState> {
                 method: "POST", body: fd
             }).then(response => response.json())
                 .then(response => {
-                    if (response.result.results.length !== 0) {
+                    this.setState({
+                        loading : false
+                    });
+
+                    if (response.status === 200 && response.result.results.length !== 0) {
                         this.setState(() => ({
                             recordedText: response.result.results[response.result.results.length - 1].alternatives[0].transcript,
-                            outcome: this.getOutcome(response.result.results[response.result.results.length - 1].alternatives[0].transcript)
-                        }))
+                            outcome: this.getOutcome(response.result.results[response.result.results.length - 1].alternatives[0].transcript),
+                        }));
+                        this.game.answerState = this.getOutcome2(response.result.results[response.result.results.length - 1].alternatives[0].transcript);
+                        this.evaluateGame();
                     }
                 });
         }
@@ -133,18 +240,75 @@ export class App extends React.Component<any, AppState> {
             case "questions":
             case "Christian.":
             case "christian":
-                {
-                    this.getQuestion();
-                    return ("");
-                }
+            {
+                this.getQuestion();
+                return ("");
+            }
             default:
                 return ('Unable to process! Please, try to record your answer again!');
+        }
+    }
+
+    getOutcome2(recordedText: any) {
+        switch (recordedText.trim()) {
+            case "a":
+            case "hey":
+            case "Hey":
+            case "hey you":
+            case "our":
+            case "A.":
+            case "eight":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 0)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "b":
+            case "bee":
+            case "be":
+            case "e":
+            case "B.":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 1)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "c":
+            case "see":
+            case "sea":
+            case "ce":
+            case "C.":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 2)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "d":
+            case "deer":
+            case "dear":
+            case "de":
+            case "D.":
+            case "T.":
+            case "the":
+            case "The":
+                if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 3)
+                    return (AnswerState.Correct);
+                else
+                    return (AnswerState.Incorrect);
+            case "Question.":
+            case "Questions.":
+            case "question":
+            case "questions":
+            case "Christian.":
+            case "christian":
+                {
+                    this.getQuestion();
+                    return (AnswerState.Unaswered);
+                }
+            default:
+                return (AnswerState.Error);
         }
     }
     _onRecordingError = (err: any) => {
         console.log('recording error', err)
     };
-
 
     getIndex(value: any, arr: any) {
         for (var i = 0; i < arr.length; i++) {
@@ -164,37 +328,126 @@ export class App extends React.Component<any, AppState> {
             <li key={item}>{['A', 'B', 'C', 'D'][index]}) {item}</li>
         );
         const questionAudio = `${this.state.question} a) ${this.state.mixedAnswers[0]}, b) ${this.state.mixedAnswers[1]}, c) ${this.state.mixedAnswers[2]}, d) ${this.state.mixedAnswers[3]}`;
+
+        const spinnerCss = css`
+              display: block;
+              margin: 0 auto;
+              margin-top: 20px;
+              border-color: red;
+            `;
+
         return (
             <div className="App">
-
                 <h1> Audio trivia game</h1>
-                {this.state.question !== '' &&
-                    <div>
-                        <Speak text={questionAudio} />
-                        <p>{this.state.question}</p>
-                        <ol id='answer_list' type="A">
-                            {answers}
-                        </ol>
-                    </div>}
+                {this.state.question === '' &&
                 <div>
-                    <button id="next_question" onClick={this.getQuestion}> {this.state.question === '' ? 'Start game' : 'Get next question'}</button>
+                    <button id="next_question" onClick={this.getQuestion}> Start game</button>
+                </div>
+                }
+
+                {this.state.question !== '' &&
+                <div className={this.game.containerClass} >
+                    <div id='container_header'>
+                        <p>Question: {this.game.questionNumber}/{this.game.totalQuestions}</p>
+                        <p>Total points: {this.game.points}</p>
+                    </div>
+
+                        {this.state.question !== '' &&
+                        <div id='container_question'>
+                            <Speak text={questionAudio} />
+                            <p><b>{this.state.question}</b></p>
+                            <hr></hr>
+                            <ol id='answer_list' type="A">
+                                {answers}
+                            </ol>
+                            <hr></hr>
+                        </div>}
+
+
+                        <div id='container_footer'>
+                            {!this.state.loading &&
+                            this.state.recordingEnabled &&
+                            <div>
+                                <Recorder
+                                onRecordingComplete={this._onRecordingComplete}
+                                onRecordingError={this._onRecordingError}
+                            />
+                                <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
+                            </div>}
+
+                            {this.state.loading &&
+                            <div>
+                                <BeatLoader
+                                    css={spinnerCss}
+                                    size={30}
+                                    color={"#ff8c00"}
+                                    loading={this.state.loading}
+                                />
+                            </div>
+                            }
+
+                            {this.game.answerState === AnswerState.Correct &&
+                            <div className='answered'>
+                                <p>Correct! The answer is {this.state.correctAnswer}.</p>
+                            </div>}
+
+                            {this.game.answerState === AnswerState.Incorrect &&
+                            <div className='answered'>
+                                <p>Incorrect! The answer is {this.state.correctAnswer}.</p>
+                            </div>}
+
+                            {this.game.answerState === AnswerState.Error &&
+                            <div className='answered_error'>
+                                <p>Unable to process! Please, try to record your answer again!</p>
+                            </div>}
+
+                            {/* Correct answer: {this.state.correctAnswer} <br /> */}
+                            {this.state.recordedText !== '' && this.state.outcome !== '' &&
+                            <div>
+                                {<Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
+                            </div>}
+                        </div>
+
+                </div>}
+
+                <div className={this.state.hideResult ? 'hidden' : ''}>
+                    <div className='result'>
+                        <div className='result_header'>
+                            <p><b>Game over</b></p>
+                        </div>
+                        <div className='result_info'>
+                            <hr></hr>
+                            <p>Answered questions: {this.game.totalQuestions}</p>
+                            <p>Total points: {this.game.points}</p>
+                            <hr></hr>
+                        </div>
+                        <div id='result_form'>
+                            <form onSubmit={this.sendResult}>
+                                <label>
+                                    Please enter your name:
+                                </label>
+                                <input className='result_form_input' type="text" name="name" onChange={this.changeNameHandler} />
+                                <br></br>
+                                <input type="submit" value="Submit" />
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
-                {this.state.question !== '' &&
-                    <div id='voiceRecord'>
-                        <Recorder
-                            onRecordingComplete={this._onRecordingComplete}
-                            onRecordingError={this._onRecordingError}
-                        />
-                        <p><i> Click and Hold to record your answer (A,B,C or D)</i></p>
-                        {/* Correct answer: {this.state.correctAnswer} <br /> */}
-                        {this.state.recordedText !== '' &&
-                            <div>
-                                <p>You have said: <b>{this.state.recordedText}</b></p>
-                                    Outcome: {this.state.outcome} The answer is {this.getLetterOfCorrenctAnswer()}) {this.state.correctAnswer}.
-                                    {this.state.outcome !== '' && <Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
-                            </div>}
-                    </div>}
+                <div className={this.state.hideScoreboard ? 'hidden' : ''}>
+                    <div className='result'>
+                        <div className='result_header'>
+                            <p><b>Thank you</b></p>
+                        </div>
+                        <div className='result_info'>
+                            <hr></hr>
+                            <a href="https://airtable.com/shrVrimG7knh2rs2x/tblu1pdeoNmDChudO/viw9kfdNc3Wo6APHF?blocks=hide"  rel="noopener noreferrer" target="_blank">Click here to see scoreboard</a>
+                            <br></br>
+                            <button onClick={this.restartGame}>Restart game</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         );
     }

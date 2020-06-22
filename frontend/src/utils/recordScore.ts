@@ -14,7 +14,7 @@ export const recordScore = (name: string, answeredQuestions: number, correctAnsw
             console.error(err);
             return;
         }
-        // console.log(record.getId());
+         console.log(record);
     });
 
 }
