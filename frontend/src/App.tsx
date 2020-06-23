@@ -185,7 +185,7 @@ export class App extends React.Component<any, AppState> {
 
                     if (response.status === 200 && response.result.results.length !== 0) {
                         let recordedText = response.result.results[response.result.results.length - 1].alternatives[0].transcript;
-                        let recordedLetter = getLetter(recordedText);
+                        let recordedLetter = getLetter(recordedText)
                         this.setState(() => ({
                             recordedText,
                             recordedLetter,
@@ -287,7 +287,6 @@ export class App extends React.Component<any, AppState> {
                 return (AnswerState.Error);
         }
     }
-    
     _onRecordingError = (err: any) => {
         console.log('recording error', err)
     };
@@ -385,10 +384,9 @@ export class App extends React.Component<any, AppState> {
                                 </div>}
 
                             {/* Correct answer: {this.state.correctAnswer} <br /> */}
-                            {this.state.recordedText !== '' &&
-                            (this.game.answerState === AnswerState.Correct || this.game.answerState === AnswerState.Incorrect) &&
+                            {this.state.recordedText !== '' && this.state.outcome !== '' &&
                                 <div>
-                                    {<Speak text={`${AnswerState[this.game.answerState]} The answer is ${this.state.correctAnswer}.`} />}
+                                    {<Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
                                 </div>}
                         </div>
 
