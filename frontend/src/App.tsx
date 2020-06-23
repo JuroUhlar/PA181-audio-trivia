@@ -353,13 +353,14 @@ export class App extends React.Component<any, AppState> {
                                     <p>Incorrect! The answer is {this.state.correctAnswer}.</p>
                                 </div>}
 
-                            {this.game.answerState === AnswerState.Error &&
+                            {this.state.outcome === 'Unable to process! Please, try to record your answer again!' &&
                                 <div className='answered_error'>
                                     <p>Unable to process! Please, try to record your answer again!</p>
+                                    {<Speak text={this.state.outcome} />}
                                 </div>}
 
                             {/* Correct answer: {this.state.correctAnswer} <br /> */}
-                            {this.state.recordedText !== '' && this.state.outcome !== '' &&
+                            {this.state.recordedText !== '' && (this.state.outcome === 'Correct!' || this.state.outcome === 'Incorrect!') &&
                                 <div>
                                     {<Speak text={`${this.state.outcome} The answer is ${this.state.correctAnswer}.`} />}
                                 </div>}
