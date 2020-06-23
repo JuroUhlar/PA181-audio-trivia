@@ -191,7 +191,7 @@ export class App extends React.Component<any, AppState> {
                             recordedLetter,
                             outcome: this.getOutcome(recordedLetter),
                         }));
-                        this.game.answerState = this.getOutcome2(recordedText);
+                        this.game.answerState = this.getOutcome2(recordedLetter);
                         this.evaluateGame();
                     }
                 });
@@ -230,55 +230,29 @@ export class App extends React.Component<any, AppState> {
         }
     }
 
-    getOutcome2(recordedText: any) {
-        switch (recordedText.trim()) {
-            case "a":
-            case "hey":
-            case "Hey":
-            case "hey you":
-            case "our":
-            case "A.":
-            case "eight":
+    getOutcome2(recordedLetter: any) {
+        switch (recordedLetter) {
+            case "A":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 0)
                     return (AnswerState.Correct);
                 else
                     return (AnswerState.Incorrect);
-            case "b":
-            case "bee":
-            case "be":
-            case "e":
-            case "B.":
+            case "B":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 1)
                     return (AnswerState.Correct);
                 else
                     return (AnswerState.Incorrect);
-            case "c":
-            case "see":
-            case "sea":
-            case "ce":
-            case "C.":
+            case "C":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 2)
                     return (AnswerState.Correct);
                 else
                     return (AnswerState.Incorrect);
-            case "d":
-            case "deer":
-            case "dear":
-            case "de":
-            case "D.":
-            case "T.":
-            case "the":
-            case "The":
+            case "D":
                 if (this.getIndex(this.state.correctAnswer, this.state.mixedAnswers) === 3)
                     return (AnswerState.Correct);
                 else
                     return (AnswerState.Incorrect);
-            case "Question.":
-            case "Questions.":
-            case "question":
-            case "questions":
-            case "Christian.":
-            case "christian":
+            case "Question":
                 {
                     this.getQuestion();
                     return (AnswerState.Unaswered);
@@ -287,6 +261,7 @@ export class App extends React.Component<any, AppState> {
                 return (AnswerState.Error);
         }
     }
+
     _onRecordingError = (err: any) => {
         console.log('recording error', err)
     };
